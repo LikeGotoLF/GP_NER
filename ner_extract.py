@@ -1,4 +1,5 @@
 import os
+import sys
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 from model import GlobalPointer
 from ner_base_pt import load_data, NamedEntityRecognizer
