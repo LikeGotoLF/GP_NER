@@ -309,4 +309,65 @@ def cmd():
 	while True:
 		cmd = input("> ")
 		sql(cmd)
-		
+
+#计算最终预测三元组的p、r、f1
+def predictMetric(tdata,save_dir):
+    truth_num,preds_num,pred_correct=0,0,0
+
+    for data in tdata:
+        truth=data.get('relationMentions',[])
+        preds=data.get('preds',[])
+
+        truth_num+=len(truth)
+        preds_num+=len(preds)
+
+        t_list=[[item['label'],item['em1Text'],item['em2Text']] for item in truth]
+        print('\n'+'-'*100)
+        print(t_list)
+        print('rc_pred ',data['rc_pred'])
+        print('-'*20)
+
+        for item in preds:
+            label,pred_em1Text,pred_em2Text=item['label'],item['em1Text'],item['em2Text']
+            if [label,pred_em1Text,pred_em2Text] in t_list:
+                print([label,pred_em1Text,pred_em2Text],'\tyes')
+                pred_correct+=1
+            else:print([label,pred_em1Text,pred_em2Text],'\tno')
+    p=pred_correct/preds_num
+    r=pred_correct/truth_num
+    f1=2*p*r/(p+r) if p+r !=0 else 0
+    print(p,r,f1)
+    with open(save_dir+'/metrics.txt','a+',encoding='utf-8') as f:
+        f.write('precision:{:.4f}\trecall:{:.4f}\tF1:{:.4f}\n'.format(p,r,f1))
+        f.write('-' * 50 + '\n')
+
+    return
+
+
+def modifyData():
+    if z.get('ys',[])!=[]:
+        z['relationMentions']=[]
+        for item in z['ys']:
+            p_o=item.get('c')
+            if p_o.get('s',[])!=[]:
+                for o in item.get('rval',''):
+                    spo={'label':p_o.get('p',''),'em1Text':p_o.get('s',''),'em2Text':o}
+                    z['relationMentions'].append(spo)
+        z.pop('ys')
+
+def getPointer(tokens,out):
+    l_tokens=len(tokens)
+    out=out[:l_tokens,:l_tokens]
+    ents=(out>0).float().nonzero()
+    results=[]
+    for i in range(ents.size(0)):
+        results.append(''.join(tokens[ents[i,0]:ents[i,1]+1]))
+    return results
+
+def add_rc_pred(tdata):
+    for item in tdata:
+        if 'spo_list' in item:
+            spo_list = item.get('spo_list', [])
+        else:spo_list = item.get('relationMentions', [])
+        labels = list(set(x['label'] for x in spo_list))
+        item['rc_pred']=labels
