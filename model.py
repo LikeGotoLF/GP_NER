@@ -4,6 +4,7 @@ import torch.nn as nn
 
 
 
+
 class GlobalPointer(nn.Module):
     def __init__(self, encoder, ent_type_size, inner_dim, RoPE=True):
         super().__init__()
