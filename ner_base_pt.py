@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import pt_utils
 
+
 categories = set()
 
 def load_data(filename):
